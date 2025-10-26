@@ -19,22 +19,6 @@ from simulation import (
     CompatibilityFactor, GenerationResult
 )
 from visualization import PairMorphVisualizer, create_summary_statistics
-# --- AUTO-GENERATE CREW IF NONE EXISTS ---
-from data import DataGenerator
-
-if 'crew' not in st.session_state or len(st.session_state.crew) == 0:
-    generator = DataGenerator(seed=42)
-    st.session_state.crew = generator.generate_crew(30, [f"Crew Member {i+1}" for i in range(30)])
-    st.session_state.population = len(st.session_state.crew)
-else:
-    # Fallback in case population doesn't get set
-    st.session_state.population = len(st.session_state.crew)
-
-# Fallback: if somehow crew generation failed, just set a default demo population
-if 'population' not in st.session_state or st.session_state.population == 0:
-    st.session_state.population = 30
-
-
 
 
 class StarCrossedApp:
@@ -384,88 +368,57 @@ class StarCrossedApp:
             st.rerun()
     
     def render_results_dashboard(self):
-        """Results dashboard with Genetic, Psychological, and Final Results tabs."""
+        """Results dashboard with Genetic and Psychological tabs."""
         st.markdown('<div class="section-header">SIMULATION RESULTS</div>', unsafe_allow_html=True)
-
+        
         # Summary metrics
         if st.session_state.simulation_results:
             results = st.session_state.simulation_results
             col1, col2, col3, col4 = st.columns(4)
-
-                with col1:
-                    st.markdown(f"""
-                    <div class="metric-container">
-                        <div class="metric-value">{results[-1].diversity_index:.3f}</div>
-                        <div class="metric-label">Diversity Index</div>
-                    </div>
-                    """, unsafe_allow_html=True)
-
-                with col2:
-                    avg_fertility = np.mean([r.average_fertility for r in results])
-                    st.markdown(f"""
-                    <div class="metric-container">
-                        <div class="metric-value">{avg_fertility:.3f}</div>
-                        <div class="metric-label">Avg Fertility</div>
-                    </div>
-                    """, unsafe_allow_html=True)
-
-                with col3:
-                    st.markdown(f"""
-                    <div class="metric-container">
-                        <div class="metric-value">{len(results)}</div>
-                        <div class="metric-label">Generations</div>
-                    </div>
-                    """, unsafe_allow_html=True)
-
-                with col4:
-                    final_offspring = len(results[-1].offspring) if results[-1].offspring else 0
-                    st.markdown(f"""
-                    <div class="metric-container">
-                        <div class="metric-value">{final_offspring}</div>
-                        <div class="metric-label">Final Population</div>
-                    </div>
-                    """, unsafe_allow_html=True)
-
-            # Tabs
-            tab1, tab2, tab3 = st.tabs(["GENETIC ANALYSIS", "PSYCHOLOGICAL ANALYSIS", "FINAL RESULTS"])
-
-                with tab1:
-                    self.render_genetic_analysis()
-
-                with tab2:
-                    self.render_psychological_analysis()
-
-                with tab3:
-                    # --- Simple generational chart fallback ---
-                    st.markdown("### Multi-Generation Simulation Overview")
-
-                    results = st.session_state.simulation_results
-                    if results:
-                        generations = [r.generation for r in results]
-                        population_sizes = [len(r.offspring) if r.offspring else 0 for r in results]
-
-                        fig = go.Figure()
-                        fig.add_trace(go.Scatter(
-                            x=generations,
-                            y=population_sizes,
-                            mode='lines+markers',
-                            name='Population per Generation',
-                            line=dict(color='#FF3B52', width=3)
-                        ))
-                        fig.update_layout(
-                            xaxis_title="Generation",
-                            yaxis_title="Population Size",
-                            template="plotly_dark",
-                            height=400,
-                            plot_bgcolor='rgba(0,0,0,0)',
-                            paper_bgcolor='rgba(0,0,0,0)',
-                            font=dict(color='#E0E0E0'),
-                            title_font=dict(color='#00E0FF')
-                        )
-                        st.plotly_chart(fig, use_container_width=True)
-                    else:
-                        st.warning("No simulation data found.")
-
+            
+            with col1:
+                st.markdown(f"""
+                <div class="metric-container">
+                    <div class="metric-value">{results[-1].diversity_index:.3f}</div>
+                    <div class="metric-label">Diversity Index</div>
+                </div>
+                """, unsafe_allow_html=True)
+            
+            with col2:
+                avg_fertility = np.mean([r.average_fertility for r in results])
+                st.markdown(f"""
+                <div class="metric-container">
+                    <div class="metric-value">{avg_fertility:.3f}</div>
+                    <div class="metric-label">Avg Fertility</div>
+                </div>
+                """, unsafe_allow_html=True)
+            
+            with col3:
+                st.markdown(f"""
+                <div class="metric-container">
+                    <div class="metric-value">{len(results)}</div>
+                    <div class="metric-label">Generations</div>
+                </div>
+                """, unsafe_allow_html=True)
+            
+            with col4:
+                final_offspring = len(results[-1].offspring) if results[-1].offspring else 0
+                st.markdown(f"""
+                <div class="metric-container">
+                    <div class="metric-value">{final_offspring}</div>
+                    <div class="metric-label">Final Population</div>
+                </div>
+                """, unsafe_allow_html=True)
+            
+            # Tabbed analysis
+            tab1, tab2 = st.tabs(["GENETIC ANALYSIS", "PSYCHOLOGICAL ANALYSIS"])
+            
+            with tab1:
+                self.render_genetic_analysis()
+            
+            with tab2:
+                self.render_psychological_analysis()
+        
         # Action buttons
         st.markdown("---")
         col1, col2, col3 = st.columns([1, 1, 1])

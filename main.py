@@ -26,7 +26,13 @@ if 'crew' not in st.session_state or len(st.session_state.crew) == 0:
     generator = DataGenerator(seed=42)
     st.session_state.crew = generator.generate_crew(30, [f"Crew Member {i+1}" for i in range(30)])
     st.session_state.population = len(st.session_state.crew)
-    st.rerun()
+else:
+    # Fallback in case population doesn't get set
+    st.session_state.population = len(st.session_state.crew)
+
+# Fallback: if somehow crew generation failed, just set a default demo population
+if 'population' not in st.session_state or st.session_state.population == 0:
+    st.session_state.population = 30
 
 
 
@@ -433,6 +439,33 @@ class StarCrossedApp:
             with tab3:
                 st.markdown('<h3 style="font-family: Orbitron; color: #00E0FF; text-align: center;">FINAL RESULTS</h3>', unsafe_allow_html=True)
                 st.markdown("### Multi-Generation Simulation Overview")
+                results = st.session_state.simulation_results
+if results:
+    generations = [r.generation for r in results]
+    population_sizes = [len(r.offspring) if r.offspring else 0 for r in results]
+
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(
+        x=generations,
+        y=population_sizes,
+        mode='lines+markers',
+        name='Population per Generation',
+        line=dict(color='#FF3B52', width=3)
+    ))
+    fig.update_layout(
+        xaxis_title="Generation",
+        yaxis_title="Population Size",
+        template="plotly_dark",
+        height=400,
+        plot_bgcolor='rgba(0,0,0,0)',
+        paper_bgcolor='rgba(0,0,0,0)',
+        font=dict(color='#E0E0E0'),
+        title_font=dict(color='#00E0FF')
+    )
+    st.plotly_chart(fig, use_container_width=True)
+else:
+    st.warning("No simulation data found.")
+
 
                 if st.session_state.simulation_results:
                     from visualization import (

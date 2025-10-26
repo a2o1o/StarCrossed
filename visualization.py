@@ -472,7 +472,7 @@ def create_summary_statistics(crew: List[CrewMember], results: List[GenerationRe
     """Create summary statistics for the simulation."""
     stats = {
         'initial_population': len(crew),
-        'final_population': len(results[-1].offspring) if results else 0,
+        'final_population': len(results[-1].offspring) if results else 30, #30 is the default population size
         'generations_simulated': len(results),
         'average_diversity': np.mean([r.diversity_index for r in results]) if results else 0,
         'average_fertility': np.mean([r.average_fertility for r in results]) if results else 0,

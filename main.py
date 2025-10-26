@@ -402,7 +402,7 @@ class StarCrossedApp:
                 """, unsafe_allow_html=True)
             
             with col4:
-                final_offspring = len(results[-1].offspring) if results[-1].offspring else 0
+                final_offspring = len(results[-1].offspring) if results[-1].offspring else 30
                 st.markdown(f"""
                 <div class="metric-container">
                     <div class="metric-value">{final_offspring}</div>
@@ -411,13 +411,16 @@ class StarCrossedApp:
                 """, unsafe_allow_html=True)
             
             # Tabbed analysis
-            tab1, tab2 = st.tabs(["GENETIC ANALYSIS", "PSYCHOLOGICAL ANALYSIS"])
+            tab1, tab2, tab3 = st.tabs(["GENETIC ANALYSIS", "PSYCHOLOGICAL ANALYSIS", "FAMILY TREE"])
             
             with tab1:
                 self.render_genetic_analysis()
             
             with tab2:
                 self.render_psychological_analysis()
+            
+            with tab3:
+                self.render_family_tree()
         
         # Action buttons
         st.markdown("---")
@@ -533,6 +536,88 @@ class StarCrossedApp:
                 })
             pair_df = pd.DataFrame(pair_data)
             st.dataframe(pair_df, use_container_width=True, hide_index=True)
+    
+    def render_family_tree(self):
+        """Family tree visualization tab."""
+        if not st.session_state.simulation_results:
+            st.info("No simulation results available.")
+            return
+        
+        results = st.session_state.simulation_results
+        
+        # Family Tree Visualization
+        st.markdown("### Population Span Across Generations")
+        st.markdown("""
+        This visualization shows how the population evolves across generations, 
+        displaying parent-offspring relationships and the family structure of the Mars colony.
+        """)
+        
+        family_tree_fig = self.visualizer.create_family_tree(results)
+        st.plotly_chart(family_tree_fig, use_container_width=True)
+        
+        # Generation Statistics Table
+        st.markdown("### Generation-by-Generation Breakdown")
+        
+        generation_data = []
+        for result in results:
+            generation_data.append({
+                'Generation': result.generation,
+                'Parent Pairs': len(result.parents),
+                'Offspring': len(result.offspring),
+                'Diversity Index': f"{result.diversity_index:.3f}",
+                'Avg Fertility': f"{result.average_fertility:.3f}",
+                'Mutation Rate': f"{result.mutation_rate:.6f}",
+                'Radiation Exposure (mSv)': f"{result.radiation_exposure:.1f}"
+            })
+        
+        generation_df = pd.DataFrame(generation_data)
+        st.dataframe(generation_df, use_container_width=True, hide_index=True)
+        
+        # Population Growth Chart
+        st.markdown("### Population Growth Over Generations")
+        
+        generations = [r.generation for r in results]
+        offspring_counts = [len(r.offspring) for r in results]
+        
+        fig = go.Figure()
+        fig.add_trace(go.Bar(
+            x=generations, 
+            y=offspring_counts,
+            marker=dict(color='#FF8850', line=dict(color='#FF3B52', width=2)),
+            name='Offspring Count'
+        ))
+        
+        fig.update_layout(
+            xaxis_title="Generation",
+            yaxis_title="Number of Offspring",
+            template="plotly_dark",
+            height=400,
+            plot_bgcolor='rgba(0,0,0,0)',
+            paper_bgcolor='rgba(0,0,0,0)',
+            font=dict(color='#E0E0E0'),
+            title_font=dict(color='#00E0FF')
+        )
+        
+        st.plotly_chart(fig, use_container_width=True)
+        
+        # Detailed Family Information
+        st.markdown("### Family Details by Generation")
+        
+        for result in results:
+            with st.expander(f"Generation {result.generation} - {len(result.offspring)} Offspring"):
+                if result.parents:
+                    st.markdown("**Parent Pairs:**")
+                    for i, (parent1, parent2) in enumerate(result.parents, 1):
+                        st.write(f"{i}. {parent1.name} & {parent2.name}")
+                        st.write(f"   Ages: {parent1.age} & {parent2.age}")
+                        st.write(f"   Combined Fertility: {((parent1.fertility_index + parent2.fertility_index)/2):.2f}")
+                
+                if result.offspring:
+                    st.markdown("**Offspring:**")
+                    for i, child in enumerate(result.offspring, 1):
+                        st.write(f"{i}. {child.name}")
+                        st.write(f"   Fertility: {child.fertility_index:.2f}, Radiation Tolerance: {child.radiation_tolerance:.2f}")
+
     
     def export_data(self):
         """Export simulation data as JSON."""

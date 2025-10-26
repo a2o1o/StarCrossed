@@ -384,128 +384,88 @@ class StarCrossedApp:
             st.rerun()
     
     def render_results_dashboard(self):
-        """Results dashboard with Genetic and Psychological tabs."""
+        """Results dashboard with Genetic, Psychological, and Final Results tabs."""
         st.markdown('<div class="section-header">SIMULATION RESULTS</div>', unsafe_allow_html=True)
-        
+
         # Summary metrics
         if st.session_state.simulation_results:
             results = st.session_state.simulation_results
             col1, col2, col3, col4 = st.columns(4)
-            
-            with col1:
-                st.markdown(f"""
-                <div class="metric-container">
-                    <div class="metric-value">{results[-1].diversity_index:.3f}</div>
-                    <div class="metric-label">Diversity Index</div>
-                </div>
-                """, unsafe_allow_html=True)
-            
-            with col2:
-                avg_fertility = np.mean([r.average_fertility for r in results])
-                st.markdown(f"""
-                <div class="metric-container">
-                    <div class="metric-value">{avg_fertility:.3f}</div>
-                    <div class="metric-label">Avg Fertility</div>
-                </div>
-                """, unsafe_allow_html=True)
-            
-            with col3:
-                st.markdown(f"""
-                <div class="metric-container">
-                    <div class="metric-value">{len(results)}</div>
-                    <div class="metric-label">Generations</div>
-                </div>
-                """, unsafe_allow_html=True)
-            
-            with col4:
-                final_offspring = len(results[-1].offspring) if results[-1].offspring else 0
-                st.markdown(f"""
-                <div class="metric-container">
-                    <div class="metric-value">{final_offspring}</div>
-                    <div class="metric-label">Final Population</div>
-                </div>
-                """, unsafe_allow_html=True)
-            
-            # Tabbed analysis
-                    # --- TAB SETUP ---
+
+                with col1:
+                    st.markdown(f"""
+                    <div class="metric-container">
+                        <div class="metric-value">{results[-1].diversity_index:.3f}</div>
+                        <div class="metric-label">Diversity Index</div>
+                    </div>
+                    """, unsafe_allow_html=True)
+
+                with col2:
+                    avg_fertility = np.mean([r.average_fertility for r in results])
+                    st.markdown(f"""
+                    <div class="metric-container">
+                        <div class="metric-value">{avg_fertility:.3f}</div>
+                        <div class="metric-label">Avg Fertility</div>
+                    </div>
+                    """, unsafe_allow_html=True)
+
+                with col3:
+                    st.markdown(f"""
+                    <div class="metric-container">
+                        <div class="metric-value">{len(results)}</div>
+                        <div class="metric-label">Generations</div>
+                    </div>
+                    """, unsafe_allow_html=True)
+
+                with col4:
+                    final_offspring = len(results[-1].offspring) if results[-1].offspring else 0
+                    st.markdown(f"""
+                    <div class="metric-container">
+                        <div class="metric-value">{final_offspring}</div>
+                        <div class="metric-label">Final Population</div>
+                    </div>
+                    """, unsafe_allow_html=True)
+
+            # Tabs
             tab1, tab2, tab3 = st.tabs(["GENETIC ANALYSIS", "PSYCHOLOGICAL ANALYSIS", "FINAL RESULTS"])
 
-            with tab1:
-                self.render_genetic_analysis()
+                with tab1:
+                    self.render_genetic_analysis()
 
-            with tab2:
-                self.render_psychological_analysis()
+                with tab2:
+                    self.render_psychological_analysis()
 
-            with tab3:
-                st.markdown('<h3 style="font-family: Orbitron; color: #00E0FF; text-align: center;">FINAL RESULTS</h3>', unsafe_allow_html=True)
-                st.markdown("### Multi-Generation Simulation Overview")
-                results = st.session_state.simulation_results
-if results:
-    generations = [r.generation for r in results]
-    population_sizes = [len(r.offspring) if r.offspring else 0 for r in results]
+                with tab3:
+                    # --- Simple generational chart fallback ---
+                    st.markdown("### Multi-Generation Simulation Overview")
 
-    fig = go.Figure()
-    fig.add_trace(go.Scatter(
-        x=generations,
-        y=population_sizes,
-        mode='lines+markers',
-        name='Population per Generation',
-        line=dict(color='#FF3B52', width=3)
-    ))
-    fig.update_layout(
-        xaxis_title="Generation",
-        yaxis_title="Population Size",
-        template="plotly_dark",
-        height=400,
-        plot_bgcolor='rgba(0,0,0,0)',
-        paper_bgcolor='rgba(0,0,0,0)',
-        font=dict(color='#E0E0E0'),
-        title_font=dict(color='#00E0FF')
-    )
-    st.plotly_chart(fig, use_container_width=True)
-else:
-    st.warning("No simulation data found.")
-
-
-                if st.session_state.simulation_results:
-                    from visualization import (
-                        plot_generational_diversity,
-                        plot_population_trend,
-                        plot_mutation_trend
-                    )
-
-                    # Pull results from the stored simulation
                     results = st.session_state.simulation_results
+                    if results:
+                        generations = [r.generation for r in results]
+                        population_sizes = [len(r.offspring) if r.offspring else 0 for r in results]
 
-                    # Plot diversity over generations
-                    st.subheader("📈 Genetic Diversity Over Generations")
-                    st.plotly_chart(plot_generational_diversity({
-                        "generations": [r.generation for r in results],
-                        "diversity": [r.diversity_index for r in results]
-                    }), use_container_width=True)
+                        fig = go.Figure()
+                        fig.add_trace(go.Scatter(
+                            x=generations,
+                            y=population_sizes,
+                            mode='lines+markers',
+                            name='Population per Generation',
+                            line=dict(color='#FF3B52', width=3)
+                        ))
+                        fig.update_layout(
+                            xaxis_title="Generation",
+                            yaxis_title="Population Size",
+                            template="plotly_dark",
+                            height=400,
+                            plot_bgcolor='rgba(0,0,0,0)',
+                            paper_bgcolor='rgba(0,0,0,0)',
+                            font=dict(color='#E0E0E0'),
+                            title_font=dict(color='#00E0FF')
+                        )
+                        st.plotly_chart(fig, use_container_width=True)
+                    else:
+                        st.warning("No simulation data found.")
 
-                    # Plot population trend
-                    st.subheader("👶 Population Trend")
-                    st.plotly_chart(plot_population_trend({
-                        "generations": [r.generation for r in results],
-                        "population": [len(r.offspring) if r.offspring else 0 for r in results]
-                    }), use_container_width=True)
-
-                    # Plot mutation risk
-                    st.subheader("🧫 Mutation Risk Trend")
-                    st.plotly_chart(plot_mutation_trend({
-                        "generations": [r.generation for r in results],
-                        "mutation_rate": [r.mutation_rate for r in results]
-                    }), use_container_width=True)
-
-                    st.caption("Note: This projection is based on simplified generational and radiation models.")
-                else:
-                    st.info("Run a simulation to generate final results.")
-
-            
-
-            
-        
         # Action buttons
         st.markdown("---")
         col1, col2, col3 = st.columns([1, 1, 1])

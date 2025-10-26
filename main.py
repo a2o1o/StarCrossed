@@ -19,6 +19,14 @@ from simulation import (
     CompatibilityFactor, GenerationResult
 )
 from visualization import PairMorphVisualizer, create_summary_statistics
+# --- AUTO-GENERATE CREW IF NONE EXISTS ---
+from data import DataGenerator
+
+if 'crew' not in st.session_state or len(st.session_state.crew) == 0:
+    generator = DataGenerator(seed=42)
+    st.session_state.crew = generator.generate_crew(30, [f"Crew Member {i+1}" for i in range(30)])
+    st.session_state.population = len(st.session_state.crew)
+
 
 
 class StarCrossedApp:
@@ -411,13 +419,57 @@ class StarCrossedApp:
                 """, unsafe_allow_html=True)
             
             # Tabbed analysis
-            tab1, tab2 = st.tabs(["GENETIC ANALYSIS", "PSYCHOLOGICAL ANALYSIS"])
-            
+                    # --- TAB SETUP ---
+            tab1, tab2, tab3 = st.tabs(["GENETIC ANALYSIS", "PSYCHOLOGICAL ANALYSIS", "FINAL RESULTS"])
+
             with tab1:
                 self.render_genetic_analysis()
-            
+
             with tab2:
                 self.render_psychological_analysis()
+
+            with tab3:
+                st.markdown('<h3 style="font-family: Orbitron; color: #00E0FF; text-align: center;">FINAL RESULTS</h3>', unsafe_allow_html=True)
+                st.markdown("### Multi-Generation Simulation Overview")
+
+                if st.session_state.simulation_results:
+                    from visualization import (
+                        plot_generational_diversity,
+                        plot_population_trend,
+                        plot_mutation_trend
+                    )
+
+                    # Pull results from the stored simulation
+                    results = st.session_state.simulation_results
+
+                    # Plot diversity over generations
+                    st.subheader("📈 Genetic Diversity Over Generations")
+                    st.plotly_chart(plot_generational_diversity({
+                        "generations": [r.generation for r in results],
+                        "diversity": [r.diversity_index for r in results]
+                    }), use_container_width=True)
+
+                    # Plot population trend
+                    st.subheader("👶 Population Trend")
+                    st.plotly_chart(plot_population_trend({
+                        "generations": [r.generation for r in results],
+                        "population": [len(r.offspring) if r.offspring else 0 for r in results]
+                    }), use_container_width=True)
+
+                    # Plot mutation risk
+                    st.subheader("🧫 Mutation Risk Trend")
+                    st.plotly_chart(plot_mutation_trend({
+                        "generations": [r.generation for r in results],
+                        "mutation_rate": [r.mutation_rate for r in results]
+                    }), use_container_width=True)
+
+                    st.caption("Note: This projection is based on simplified generational and radiation models.")
+                else:
+                    st.info("Run a simulation to generate final results.")
+
+            
+
+            
         
         # Action buttons
         st.markdown("---")

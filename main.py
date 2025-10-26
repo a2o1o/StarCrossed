@@ -26,7 +26,7 @@ if 'crew' not in st.session_state or len(st.session_state.crew) == 0:
     generator = DataGenerator(seed=42)
     st.session_state.crew = generator.generate_crew(30, [f"Crew Member {i+1}" for i in range(30)])
     st.session_state.population = len(st.session_state.crew)
-    st.experimental_rerun()
+    st.rerun()
 
 
 
